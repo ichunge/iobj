@@ -8,3 +8,4 @@ dist/output/
 /dist-tests/
 /.nyc_output/
 .git/
+.ftp

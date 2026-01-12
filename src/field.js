@@ -83,7 +83,7 @@ class Proto extends Base {
       _value: _valueInit, // 用于脏检查的缓存值
     });
     const state = instanceStateMap.get(ths);
-    Object.defineProperty(ths, "value", {set: set, get: () => state.value});
+    Object.defineProperty(ths, "value", {set: set, get: () => state.value, enumerable: true, configurable: true});
     ths.validation = [];
   }
   async validate(skipEmpty = false) {
