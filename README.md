@@ -47,7 +47,7 @@ console.log(u.modified.name)    // true/false
 
 await u.validate(true)          // skipEmpty=true：空值跳过校验（保持当前 isValid）
 console.log(u.isValid)          // undefined | true | false
-console.log(u.validation.name)  // undefined | true | [ { message: string }, ... ]
+console.log(u.validation.name)  // { isValid: undefined|true|false, validation: [...] }
 ```
 
 ### 定义 Field（defineField）
@@ -130,7 +130,7 @@ const u = new User({ name: 'Li' }) // 传入的初始值会作为各字段 initV
   - `model.value`: 纯数据对象（每个 key 都代理到对应 Field）
   - `model.fields`: 字段实例映射（`{ [name]: FieldInstance }`）
   - `model.modified`: 字段 dirty 映射（`{ [name]: boolean }`）
-  - `model.validation`: 字段 valid 映射（`{ [name]: undefined | true | Error[] }`）
+  - `model.validation`: 字段 valid 映射（`{ [name]: { isValid: boolean|undefined, validation: Error[] } }`）
   - `model.isDirty`: `modified` 的聚合（任一字段为 `true` 则为 `true`）
   - `model.isValid`: 三态聚合
     - 任一字段为错误数组（失败）→ `false`
@@ -204,9 +204,9 @@ const off = model.on('modifiedChange', (isDirty) => {
   console.log('model dirty =>', isDirty)
 })
 
-// Field 事件回调参数为对象：{ value, field }
-const off2 = model.fields.name.on('validChange', ({ value, field }) => {
-  console.log(field.name, 'valid =>', value)
+// Field 事件回调参数为：(isValid)
+const off2 = model.fields.name.on('validChange', (isValid) => {
+  console.log(model.fields.name.name, 'valid =>', isValid)
 })
 
 off()
@@ -216,10 +216,10 @@ off2()
 已使用的事件名：
 
 - `modifiedChange`
-  - Field：`{ value: boolean, field }`
+  - Field：`boolean`
   - Model：`boolean`
 - `validChange`
-  - Field：`{ value: (undefined|true|false), field }`
+  - Field：`(undefined|true|false)`
   - Model：`(undefined|true|false)`
 
 ### 自定义校验适配器（非 Zod）

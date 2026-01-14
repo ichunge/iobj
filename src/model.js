@@ -1,4 +1,4 @@
-import defineField from "./field.js";
+import defineField, { defineFields } from "./field.js";
 // import { debounce } from 'radash'
 import mitt from 'mitt'
 import instanceStateMap from "./instance-map.js";
@@ -11,9 +11,9 @@ function calcIsValid(validation) {
   // FIX: Handle empty validation (no fields)
   if (values.length === 0) return undefined;
   // 三态聚合：False(数组) > Undefined > True
-  if (values.some(v => Array.isArray(v))) {
+  if (values.some(v => v?.isValid === false)) {
     return false;
-  } else if (values.some(v => v === undefined)) {
+  } else if (values.some(v => v.isValid === undefined || v ===undefined)) {
     return undefined;
   } else {
     return true;
@@ -41,9 +41,15 @@ let fieldValidChangeHandler = function (isValid, f) {
   let ths = this;
   // 契约：简化结构 undefined | true | []
   if(isValid===false){
-    ths.validation[f.name] = f.validation || [];
+    ths.validation[f.name] = {
+      isValid: false,
+      validation: f.validation || [],
+    };
   } else {
-    ths.validation[f.name] = isValid;
+    ths.validation[f.name] = {
+      isValid: isValid,
+      validation: [],
+    };
   }
   // ths.validation[f.name] = isValid === false ? (f.validation || []) : isValid;
   const _isValid = calcIsValid(ths.validation);
@@ -62,11 +68,14 @@ function init($fields, $data = {}, ths) {
   for (let Field of $fields) {
     let fieldName = Field.name;
     let val       = $data[fieldName];
-    let field     = new Field(val);
+    let field     = new Field(val, {
+      isDirty: modified[fieldName],
+      isValid: validation[fieldName]?.isValid,
+      validation: validation[fieldName]?.validation,
+    });
     field.__ref__ = ths;
     // 初始化状态对齐 (undefined = 未验证)
-    if (validation[fieldName] === undefined) validation[fieldName] = undefined;
-    if (modified[fieldName] === undefined) modified[fieldName] = false;
+    
     let get               = () => field.value;
     let set               = (val) => field.value = val;
     field.on('modifiedChange',(isDirty) =>{
@@ -75,6 +84,11 @@ function init($fields, $data = {}, ths) {
     field.on('validChange', (isValid) =>{
       _fieldValidChangeHandler(isValid, field)
     });
+    validation[fieldName] = {
+      isValid: field.isValid,
+      validation: field.validation,
+    };
+    modified[fieldName] = field.isDirty;
     Object.defineProperty(ths.value, field.name, {get, set, enumerable: true, configurable: true});
     fields[field.name] = field;
   }
@@ -116,32 +130,6 @@ function validate(arg1, arg2) {
     }
     return isValid;
   });
-}
-
-function defineFields(fieldsCfg = {}) {
-  let fields = [];
-  const _defineField = (name, opts) => {
-    const realName = name !== undefined ? name : opts.name;
-    const f = (opts.__field__ || opts.__model__) ? opts : defineField(realName, opts);
-    fields.push(f);
-  };
-  if (Array.isArray(fieldsCfg)) {
-    fieldsCfg.forEach(i => _defineField(undefined,i));
-  } else {
-    Object.entries(fieldsCfg).forEach(([k, cfg]) => {
-      // FIX: Check if cfg is Model class
-      let isModel = false;
-      if (typeof cfg === 'function' && cfg.prototype) {
-         if (cfg.prototype instanceof Base) isModel = true;
-      }
-
-      if (!isModel && (typeof cfg !== 'object' || cfg === null || Array.isArray(cfg) || cfg instanceof Date)) {
-        cfg = {defaultValue: cfg};
-      }
-      _defineField(k, cfg);
-    });
-  }
-  return fields;
 }
 
 /**

@@ -80,8 +80,8 @@ describe('Model Functionality', () => {
     // Validate only f1
     await m.fields.f1.validate();
 
-    expect(m.validation.f1).toBe(true);
-    expect(m.validation.f2).toBeUndefined();
+    expect(m.validation.f1.isValid).toBe(true);
+    expect(m.validation.f2.isValid).toBeUndefined();
 
     // Mixed true/undefined -> undefined (incomplete validation)
     expect(m.isValid).toBeUndefined();
@@ -152,8 +152,9 @@ describe('Model with Zod Validation', () => {
 
     await m.validate();
 
-    expect(m.validation.name).toBe(true);
-    expect(Array.isArray(m.validation.phone)).toBe(true);
+    expect(m.validation.name.isValid).toBe(true);
+    expect(Array.isArray(m.validation.phone.validation)).toBe(true);
+    expect(m.validation.phone.isValid).toBe(false);
     expect(m.isValid).toBe(false);
   });
 
@@ -174,8 +175,10 @@ describe('Model with Zod Validation', () => {
 
     await m.validate();
     expect(m.isValid).toBe(false);
-    expect(Array.isArray(m.validation.username)).toBe(true);
-    expect(Array.isArray(m.validation.password)).toBe(true);
+    expect(Array.isArray(m.validation.username.validation)).toBe(true);
+    expect(Array.isArray(m.validation.password.validation)).toBe(true);
+    expect(m.validation.username.isValid).toBe(false);
+    expect(m.validation.password.isValid).toBe(false);
 
     m.value.username = 'john';
     m.value.password = '123456';
@@ -265,39 +268,39 @@ describe('Model with Zod Validation', () => {
     // All invalid initially
     await m.validate();
     expect(m.isValid).toBe(false);
-    expect(Array.isArray(m.validation.username)).toBe(true);
-    expect(Array.isArray(m.validation.email)).toBe(true);
-    expect(Array.isArray(m.validation.password)).toBe(true);
+    expect(Array.isArray(m.validation.username.validation)).toBe(true);
+    expect(Array.isArray(m.validation.email.validation)).toBe(true);
+    expect(Array.isArray(m.validation.password.validation)).toBe(true);
 
     // Fix username: starts with digit - fails
     m.value.username = '1user';
     await m.validate();
-    expect(Array.isArray(m.validation.username)).toBe(true);
+    expect(Array.isArray(m.validation.username.validation)).toBe(true);
 
     // Fix username correctly
     m.value.username = 'john_doe';
     await m.validate();
-    expect(m.validation.username).toBe(true);
+    expect(m.validation.username.isValid).toBe(true);
 
     // Email: missing @ - fails
     m.value.email = 'invalidemail';
     await m.validate();
-    expect(Array.isArray(m.validation.email)).toBe(true);
+    expect(Array.isArray(m.validation.email.validation)).toBe(true);
 
     // Fix email
     m.value.email = 'john@example.com';
     await m.validate();
-    expect(m.validation.email).toBe(true);
+    expect(m.validation.email.isValid).toBe(true);
 
     // Password: missing special char
     m.value.password = 'Abcdefg1';
     await m.validate();
-    expect(Array.isArray(m.validation.password)).toBe(true);
+    expect(Array.isArray(m.validation.password.validation)).toBe(true);
 
     // Fix password
     m.value.password = 'Abcdefg1!';
     await m.validate();
-    expect(m.validation.password).toBe(true);
+    expect(m.validation.password.isValid).toBe(true);
     expect(m.isValid).toBe(true);
   });
 
@@ -414,7 +417,7 @@ describe('Model Synchronization and Aggregation', () => {
 
     // Initial state
     expect(m.isValid).toBeUndefined();
-    expect(m.validation.f1).toBeUndefined();
+    expect(m.validation.f1.isValid).toBeUndefined();
 
     // Validate single field (invalid)
     m.fields.f1.value = 'a';
@@ -422,7 +425,8 @@ describe('Model Synchronization and Aggregation', () => {
 
     // Check sync
     expect(m.fields.f1.isValid).toBe(false);
-    expect(Array.isArray(m.validation.f1)).toBe(true);
+    expect(Array.isArray(m.validation.f1.validation)).toBe(true);
+    expect(m.validation.f1.isValid).toBe(false);
 
     // Check aggregation (one invalid -> model invalid)
     expect(m.isValid).toBe(false);
@@ -432,7 +436,7 @@ describe('Model Synchronization and Aggregation', () => {
     await m.fields.f1.validate();
 
     expect(m.fields.f1.isValid).toBe(true);
-    expect(m.validation.f1).toBe(true);
+    expect(m.validation.f1.isValid).toBe(true);
 
     // f2 is still undefined, so model.isValid should be undefined (mixed valid/undefined)
     expect(m.isValid).toBeUndefined();
@@ -441,7 +445,7 @@ describe('Model Synchronization and Aggregation', () => {
     m.fields.f2.value = 'def';
     await m.fields.f2.validate();
 
-    expect(m.validation.f2).toBe(true);
+    expect(m.validation.f2.isValid).toBe(true);
     expect(m.isValid).toBe(true);
   });
 });
@@ -500,8 +504,8 @@ describe('Model Reset Functionality', () => {
     await m.validate();
 
     expect(m.isValid).toBe(false);
-    expect(Array.isArray(m.validation.f1)).toBe(true);
-    expect(Array.isArray(m.validation.f2)).toBe(true);
+    expect(Array.isArray(m.validation.f1.validation)).toBe(true);
+    expect(Array.isArray(m.validation.f2.validation)).toBe(true);
 
     m.reset();
 
@@ -553,11 +557,12 @@ describe('Model Validation Errors Synchronization', () => {
 
     // 检查 validation 结构：失败时为错误数组
     expect(m.validation.email).toBeDefined();
-    expect(Array.isArray(m.validation.email)).toBe(true);
-    expect(m.validation.email.length).toBeGreaterThan(0);
+    expect(Array.isArray(m.validation.email.validation)).toBe(true);
+    expect(m.validation.email.validation.length).toBeGreaterThan(0);
+    expect(m.validation.email.isValid).toBe(false);
 
     expect(m.validation.age).toBeDefined();
-    expect(Array.isArray(m.validation.age)).toBe(true);
+    expect(Array.isArray(m.validation.age.validation)).toBe(true);
   });
 
   it('should update model.validation when field validation changes', async () => {
@@ -570,14 +575,15 @@ describe('Model Validation Errors Synchronization', () => {
     m.value.name = 'a';
     await m.fields.name.validate();
 
-    expect(Array.isArray(m.validation.name)).toBe(true);
-    expect(m.validation.name.length).toBeGreaterThan(0);
+    expect(Array.isArray(m.validation.name.validation)).toBe(true);
+    expect(m.validation.name.validation.length).toBeGreaterThan(0);
+    expect(m.validation.name.isValid).toBe(false);
 
     // 修正后验证通过
     m.value.name = 'abc';
     await m.fields.name.validate();
 
-    expect(m.validation.name).toBe(true);
+    expect(m.validation.name.isValid).toBe(true);
   });
 
   it('should reflect field validation errors in model.validation structure', async () => {
@@ -594,10 +600,9 @@ describe('Model Validation Errors Synchronization', () => {
     m.value.password = 'short';
     await m.validate();
 
-    expect(Array.isArray(m.validation.password)).toBe(true);
+    expect(Array.isArray(m.validation.password.validation)).toBe(true);
     // Zod 只返回第一个失败的错误
-    expect(m.validation.password[0].message).toBe('At least 8 characters');
+    expect(m.validation.password.validation[0].message).toBe('At least 8 characters');
     expect(m.fields.password.validation[0].message).toBe('At least 8 characters');
   });
 });
-

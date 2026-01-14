@@ -9,3 +9,4 @@ dist/output/
 /.nyc_output/
 .git/
 .ftp
+.pnpm-store/

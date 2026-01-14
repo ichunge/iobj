@@ -34,11 +34,11 @@ const removeTag = (index) => formData.tags.splice(index, 1)
 
 // 获取字段错误信息
 const getErrors = (v) => {
-  if(v?.map){
-    return v?.map(e => e.message)
-  } else {
-    return "";
+  const errors = v?.validation;
+  if(Array.isArray(errors) && errors.length > 0){
+    return errors.map(e => e.message).join('; ')
   }
+  return "";
 }
 
 // 手动触发校验
@@ -79,7 +79,7 @@ const statusClass = computed(() => {
       <div class="field">
         <label>姓名</label>
         <input v-model="formData.name" placeholder="至少 2 个字符" />
-        <div class="errors" v-if="validation.name">
+        <div class="errors" v-if="validation.name?.isValid === false">
           <span>{{ getErrors(validation.name) }}</span>
         </div>
       </div>
@@ -87,7 +87,7 @@ const statusClass = computed(() => {
       <div class="field">
         <label>邮箱</label>
         <input v-model="formData.email" placeholder="必须是 @gmail.com" />
-        <div class="errors" v-if="validation.email">
+        <div class="errors" v-if="validation.email?.isValid === false">
           <span>{{ getErrors(validation.email) }}</span>
         </div>
       </div>
@@ -95,7 +95,7 @@ const statusClass = computed(() => {
       <div class="field">
         <label>年龄</label>
         <input v-model="formData.age" type="number" placeholder="正整数" />
-        <div class="errors" v-if="validation.age">
+        <div class="errors" v-if="validation.age?.isValid === false">
           <span>{{ getErrors(validation.age) }}</span>
         </div>
       </div>
@@ -107,7 +107,7 @@ const statusClass = computed(() => {
           <button type="button" class="btn-sm btn-remove" @click="removeTag(index)">×</button>
         </div>
         <button type="button" class="btn-sm" @click="addTag">+ 添加标签</button>
-        <div class="errors" v-if="validation.tags">
+        <div class="errors" v-if="validation.tags?.isValid === false">
            <span>{{ getErrors(validation.tags) }}</span>
         </div>
       </div>

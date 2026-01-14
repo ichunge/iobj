@@ -64,6 +64,15 @@ class Proto extends Base {
     if (value === undefined) {
       value = typeof ths.defaultValue === "function" ? ths.defaultValue() : ths.defaultValue;
     }
+
+    if(opts.isDirty !== undefined) {
+      ths.isDirty = opts.isDirty;
+    }
+
+    if(opts.isValid !== undefined) {
+      ths.isValid = opts.isValid;
+    }
+    
     if (Array.isArray(value)) {
       // FIX: pass notifyChange as callback, bound to ths
       value = arrayProxy(value, notifyChange.bind(ths));
@@ -84,7 +93,7 @@ class Proto extends Base {
     });
     const state = instanceStateMap.get(ths);
     Object.defineProperty(ths, "value", {set: set, get: () => state.value, enumerable: true, configurable: true});
-    ths.validation = [];
+    ths.validation = opts.validation || [];
   }
   async validate(skipEmpty = false) {
     let isValid = this.isValid;
@@ -195,3 +204,29 @@ export default function defineField(name, clsOpt = {}) {
   Object.assign(F.prototype, otherOpts);
   return F;
 }
+
+export function defineFields(fieldsCfg = {}) {
+  let fields = [];
+  const _defineField = (name, opts) => {
+    const realName = name !== undefined ? name : opts.name;
+    const f = (opts.__field__ || opts.__model__) ? opts : defineField(realName, opts);
+    fields.push(f);
+  };
+  if (Array.isArray(fieldsCfg)) {
+    fieldsCfg.forEach(i => _defineField(undefined,i));
+  } else {
+    Object.entries(fieldsCfg).forEach(([k, cfg]) => {
+      // FIX: Check if cfg is Model class
+      let isModel = false;
+      if (typeof cfg === 'function' && cfg.prototype) {
+         if (cfg.prototype instanceof Base) isModel = true;
+      }
+
+      if (!isModel && (typeof cfg !== 'object' || cfg === null || Array.isArray(cfg) || cfg instanceof Date)) {
+        cfg = {defaultValue: cfg};
+      }
+      _defineField(k, cfg);
+    });
+  }
+  return fields;
+};

@@ -17,4 +17,4 @@ console.log("u.modified.name", u.modified.name)    // true
 
 await u.validate(true)          // skipEmpty=true：空值跳过校验（保持当前 isValid）
 console.log("u.isValid", u.isValid)          // false
-console.log("u.validation.name", u.validation.name)  // undefined | true | [ { message: string }, ... ]
+console.log("u.validation.name", u.validation.name)  // { isValid: ..., validation: [...] }
