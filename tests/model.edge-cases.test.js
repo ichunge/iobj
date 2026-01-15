@@ -88,7 +88,7 @@ describe('Model Edge Cases', () => {
       const m = new M();
       await m.validate();
       expect(m.isValid).toBe(false);
-      expect(Array.isArray(m.validation.f1)).toBe(true);
+      expect(Array.isArray(m.validation.f1.validation)).toBe(true);
     });
 
     it('should handle validator that throws null', async () => {
@@ -125,7 +125,7 @@ describe('Model Edge Cases', () => {
       m.value.f1 = 'ab';
       await m.validate();
       expect(m.isValid).toBe(false);
-      
+
       m.value.f1 = 'abcd';
       await m.validate();
       expect(m.isValid).toBe(true);
@@ -151,14 +151,14 @@ describe('Model Edge Cases', () => {
         f2: { defaultValue: '', validator: async () => true }
       });
       const m = new M();
-      
+
       // 并发调用 validate
       const promises = [
         m.validate(),
         m.validate(),
         m.validate()
       ];
-      
+
       const results = await Promise.all(promises);
       // 所有结果应该一致
       expect(results.every(r => r === results[0])).toBe(true);
@@ -169,12 +169,12 @@ describe('Model Edge Cases', () => {
         f1: { defaultValue: 'a' }
       });
       const m = new M();
-      
+
       // 快速连续修改
       m.value.f1 = 'b';
       m.value.f1 = 'c';
       m.value.f1 = 'd';
-      
+
       await m.sync();
       expect(m.value.f1).toBe('d');
       expect(m.isDirty).toBe(true);
@@ -196,15 +196,15 @@ describe('Model Edge Cases', () => {
         f3: 'c'
       });
       const m = new M();
-      
+
       m.value.f1 = 'x';
       m.value.f2 = 'y';
       m.value.f3 = 'z';
       await m.sync();
-      
+
       m.reset();
       await m.sync();
-      
+
       expect(m.value.f1).toBe('a');
       expect(m.value.f2).toBe('b');
       expect(m.value.f3).toBe('c');
@@ -216,7 +216,7 @@ describe('Model Edge Cases', () => {
     it('should update state BEFORE emitting event', async () => {
       const M = defineModel({ f1: 'a' });
       const m = new M();
-      
+
       let dirtyStateInListener = null;
       m.on('modifiedChange', () => {
         // 关键验证：在事件触发的那一刻，isDirty 状态必须已经更新完毕
@@ -224,10 +224,10 @@ describe('Model Edge Cases', () => {
         // 如果这里抛错，会产生 Unhandled Rejection，干扰测试运行
         // 我们通过检查状态的时序来间接证明代码的健壮性
       });
-      
+
       m.value.f1 = 'b';
       await m.sync();
-      
+
       expect(dirtyStateInListener).toBe(true);
       expect(m.isDirty).toBe(true);
     });
@@ -235,14 +235,14 @@ describe('Model Edge Cases', () => {
     it('should handle multiple event listeners', async () => {
       const M = defineModel({ f1: 'a' });
       const m = new M();
-      
+
       const calls = [];
       m.on('modifiedChange', (isDirty) => calls.push(`listener1:${isDirty}`));
       m.on('modifiedChange', (isDirty) => calls.push(`listener2:${isDirty}`));
-      
+
       m.value.f1 = 'b';
       await m.sync();
-      
+
       expect(calls.length).toBe(2);
       expect(calls).toContain('listener1:true');
       expect(calls).toContain('listener2:true');
@@ -251,14 +251,14 @@ describe('Model Edge Cases', () => {
     it('should handle event listener removal', async () => {
       const M = defineModel({ f1: 'a' });
       const m = new M();
-      
+
       const calls = [];
       const off = m.on('modifiedChange', (isDirty) => calls.push(isDirty));
-      
+
       m.value.f1 = 'b';
       await m.sync();
       expect(calls.length).toBe(1);
-      
+
       off();
       m.value.f1 = 'c';
       await m.sync();
@@ -275,7 +275,7 @@ describe('Model Edge Cases', () => {
         }
       });
       const m = new M();
-      
+
       // transform 不应该影响验证结果
       await m.validate();
       expect(m.isValid).toBe(true);
@@ -289,7 +289,7 @@ describe('Model Edge Cases', () => {
         }
       });
       const m = new M();
-      
+
       await m.validate();
       expect(m.isValid).toBe(true);
     });
@@ -302,7 +302,7 @@ describe('Model Edge Cases', () => {
         }
       });
       const m = new M();
-      
+
       await m.validate();
       expect(m.isValid).toBe(true);
     });
@@ -314,11 +314,11 @@ describe('Model Edge Cases', () => {
         tags: []
       });
       const m = new M();
-      
+
       m.value.tags.push('tag1');
       await m.sync();
       expect(m.isDirty).toBe(true);
-      
+
       m.value.tags.pop();
       await m.sync();
       expect(m.isDirty).toBe(false);
@@ -332,7 +332,7 @@ describe('Model Edge Cases', () => {
         }]
       });
       const m = new M();
-      
+
       m.value.items[0].name = 'changed';
       await m.sync();
       expect(m.isDirty).toBe(true);
@@ -344,7 +344,7 @@ describe('Model Edge Cases', () => {
       const NameField = defineField('name', { defaultValue: 'John' });
       const M = defineModel([NameField]);
       const m = new M();
-      
+
       expect(m.value.name).toBe('John');
       expect(m.fields.name).toBeInstanceOf(NameField);
     });
@@ -357,7 +357,7 @@ describe('Model Edge Cases', () => {
         nested: SubModel
       });
       const m = new M();
-      
+
       // 应该正确处理嵌套模型
       expect(m.fields.nested).toBeDefined();
     });
@@ -369,11 +369,11 @@ describe('Model Edge Cases', () => {
         f1: { defaultValue: '', rule: z.string().min(3) }
       });
       const m = new M({}, {
-        validation: { f1: true },
+        validation: { f1: { isValid: true, validation: [] } },
         modified: { f1: false }
       });
-      
-      expect(m.validation.f1).toBe(true);
+
+      expect(m.validation.f1.isValid).toBe(true);
       expect(m.modified.f1).toBe(false);
     });
 
@@ -384,8 +384,9 @@ describe('Model Edge Cases', () => {
       const m = new M({}, {
         validation: {}
       });
-      
-      expect(m.validation).toEqual({"f1": undefined});
+
+      expect(m.validation.f1.isValid).toBeUndefined();
+      expect(m.validation.f1.validation).toEqual([]);
       expect(m.modified).toEqual({"f1": false});
     });
   });

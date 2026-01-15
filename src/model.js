@@ -171,6 +171,8 @@ export class Model extends Base {
       value: init(fields, data, this),
       configurable: true
     });
+    this.isValid = options.isValid !== undefined ? options.isValid : calcIsValid(this.validation);
+    this.isDirty = options.isDirty !== undefined ? options.isDirty : calcIsDirty(this.modified);
   }
   set(k, v) {
     this.value[k] = v;
