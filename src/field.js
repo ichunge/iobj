@@ -73,6 +73,10 @@ class Proto extends Base {
       ths.isValid = opts.isValid;
     }
     
+    if(opts.validation){
+      ths.validation =pts.validation;
+    }
+    
     if (Array.isArray(value)) {
       // FIX: pass notifyChange as callback, bound to ths
       value = arrayProxy(value, notifyChange.bind(ths));
@@ -172,12 +176,16 @@ export default function defineField(name, clsOpt = {}) {
     format,
     validator,
     rule,
+    isValid,
+    readonly,
+    validation,
     ...otherOpts
   } = clsOpt;
   class F extends Proto {
-    name         = name;
-    initValue   = value;
-    __field__    = true;
+    name       = name;
+    initValue  = value;
+    isValid    = isValid;
+    __field__  = true;
   }
 
   if (typeof validator === 'function') {

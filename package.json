@@ -1,6 +1,6 @@
 {
   "name": "iobj",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "对象修改状态和验证状态管理库",
   "type": "module",
   "engines": {
