@@ -43,12 +43,12 @@ let fieldValidChangeHandler = function (isValid, f) {
   if(isValid===false){
     ths.validation[f.name] = {
       isValid: false,
-      validation: f.validation || [],
+      errors: f.validation || [],
     };
   } else {
     ths.validation[f.name] = {
       isValid: isValid,
-      validation: [],
+      errors: [],
     };
   }
   // ths.validation[f.name] = isValid === false ? (f.validation || []) : isValid;
@@ -71,9 +71,10 @@ function init($fields, $data = {}, ths) {
     let field     = new Field(val, {
       isDirty: modified[fieldName],
       isValid: validation[fieldName]?.isValid,
-      validation: validation[fieldName]?.validation,
+      validation: validation[fieldName]?.errors,
     });
     field.__ref__ = ths;
+    if(!field.name) field.name = fieldName;
     // 初始化状态对齐 (undefined = 未验证)
     
     let get               = () => field.value;
@@ -86,11 +87,11 @@ function init($fields, $data = {}, ths) {
     });
     validation[fieldName] = {
       isValid: field.isValid,
-      validation: field.validation,
+      errors: field.validation,
     };
     modified[fieldName] = field.isDirty;
-    Object.defineProperty(ths.value, field.name, {get, set, enumerable: true, configurable: true});
-    fields[field.name] = field;
+    Object.defineProperty(ths.value, fieldName, {get, set, enumerable: true, configurable: true});
+    fields[fieldName] = field;
   }
   return fields;
 }
@@ -178,7 +179,28 @@ export class Model extends Base {
     this.value[k] = v;
     return this;
   }
+  reset() {
+    const fields = this.fields;
+    Object.values(fields).forEach(field => field.reset());
+    Object.keys(this.modified || {}).forEach(k => this.modified[k] = false);
+    Object.keys(this.validation || {}).forEach(k => this.validation[k] = undefined);
+    this.isDirty = false;
+    this.isValid = undefined;
+    return this;
+  }
+  commit(opts = {}) {
+    const fields = this.fields;
+    Object.values(fields).forEach(field => field.commit && field.commit(opts));
+    Object.keys(this.modified || {}).forEach(k => this.modified[k] = false);
+    if(opts.isValid !== undefined){
+      this.isValid = opts.isValid;
+    }
+    this.isDirty = false;
+    return this;
+  }
 
   validate      = validate;
   __model__      = true;
+  static __model__ = true;
+
 }

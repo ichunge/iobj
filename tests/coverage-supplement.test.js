@@ -225,8 +225,8 @@ describe('Coverage Supplement - Model', () => {
     // Simulate direct call to handler or via event to test "isValid === false ? f.validation : isValid" logic
     // Actually we can just test normal flow where validation is array
     await m.validate();
-    expect(m.validation.f).toEqual(m.fields.f.validation);
-    expect(Array.isArray(m.validation.f)).toBe(true);
+    expect(m.validation.f.errors).toEqual(m.fields.f.validation);
+    expect(Array.isArray(m.validation.f.errors)).toBe(true);
   });
   
   it('should handle fieldModifiedChangeHandler when isDirty does not change', async () => {

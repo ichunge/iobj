@@ -1,6 +1,6 @@
 {
   "name": "iobj",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "对象修改状态和验证状态管理库",
   "type": "module",
   "engines": {
@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "npx tsc -p tsconfig.build.json",
-    "test": "npx vitest run tests/field.test.js tests/model.test.js tests/model.test.js tests/vue3-compatibility.test.js"
+    "test":"npx vitest run tests/"
   },
   "keywords": [
     "validation",

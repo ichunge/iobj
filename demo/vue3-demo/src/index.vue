@@ -34,7 +34,7 @@ const removeTag = (index) => formData.tags.splice(index, 1)
 
 // 获取字段错误信息
 const getErrors = (v) => {
-  const errors = v?.validation;
+  const errors = v?.errors;
   if(Array.isArray(errors) && errors.length > 0){
     return errors.map(e => e.message).join('; ')
   }

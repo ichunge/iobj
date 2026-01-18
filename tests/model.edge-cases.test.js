@@ -88,7 +88,7 @@ describe('Model Edge Cases', () => {
       const m = new M();
       await m.validate();
       expect(m.isValid).toBe(false);
-      expect(Array.isArray(m.validation.f1.validation)).toBe(true);
+      expect(Array.isArray(m.validation.f1.errors)).toBe(true);
     });
 
     it('should handle validator that throws null', async () => {
@@ -369,7 +369,7 @@ describe('Model Edge Cases', () => {
         f1: { defaultValue: '', rule: z.string().min(3) }
       });
       const m = new M({}, {
-        validation: { f1: { isValid: true, validation: [] } },
+        validation: { f1: { isValid: true, errors: [] } },
         modified: { f1: false }
       });
 
@@ -386,7 +386,7 @@ describe('Model Edge Cases', () => {
       });
 
       expect(m.validation.f1.isValid).toBeUndefined();
-      expect(m.validation.f1.validation).toEqual([]);
+      expect(m.validation.f1.errors).toEqual([]);
       expect(m.modified).toEqual({"f1": false});
     });
   });

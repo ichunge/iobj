@@ -153,7 +153,7 @@ describe('Model with Zod Validation', () => {
     await m.validate();
 
     expect(m.validation.name.isValid).toBe(true);
-    expect(Array.isArray(m.validation.phone.validation)).toBe(true);
+    expect(Array.isArray(m.validation.phone.errors)).toBe(true);
     expect(m.isValid).toBe(false);
   });
 
@@ -174,8 +174,8 @@ describe('Model with Zod Validation', () => {
 
     await m.validate();
     expect(m.isValid).toBe(false);
-    expect(Array.isArray(m.validation.username.validation)).toBe(true);
-    expect(Array.isArray(m.validation.password.validation)).toBe(true);
+    expect(Array.isArray(m.validation.username.errors)).toBe(true);
+    expect(Array.isArray(m.validation.password.errors)).toBe(true);
 
     m.value.username = 'john';
     m.value.password = '123456';
@@ -265,14 +265,14 @@ describe('Model with Zod Validation', () => {
     // All invalid initially
     await m.validate();
     expect(m.isValid).toBe(false);
-    expect(Array.isArray(m.validation.username.validation)).toBe(true);
-    expect(Array.isArray(m.validation.email.validation)).toBe(true);
-    expect(Array.isArray(m.validation.password.validation)).toBe(true);
+    expect(Array.isArray(m.validation.username.errors)).toBe(true);
+    expect(Array.isArray(m.validation.email.errors)).toBe(true);
+    expect(Array.isArray(m.validation.password.errors)).toBe(true);
 
     // Fix username: starts with digit - fails
     m.value.username = '1user';
     await m.validate();
-    expect(Array.isArray(m.validation.username.validation)).toBe(true);
+    expect(Array.isArray(m.validation.username.errors)).toBe(true);
 
     // Fix username correctly
     m.value.username = 'john_doe';
@@ -282,7 +282,7 @@ describe('Model with Zod Validation', () => {
     // Email: missing @ - fails
     m.value.email = 'invalidemail';
     await m.validate();
-    expect(Array.isArray(m.validation.email.validation)).toBe(true);
+    expect(Array.isArray(m.validation.email.errors)).toBe(true);
 
     // Fix email
     m.value.email = 'john@example.com';
@@ -292,7 +292,7 @@ describe('Model with Zod Validation', () => {
     // Password: missing special char
     m.value.password = 'Abcdefg1';
     await m.validate();
-    expect(Array.isArray(m.validation.password.validation)).toBe(true);
+    expect(Array.isArray(m.validation.password.errors)).toBe(true);
 
     // Fix password
     m.value.password = 'Abcdefg1!';
@@ -422,7 +422,7 @@ describe('Model Synchronization and Aggregation', () => {
 
     // Check sync
     expect(m.fields.f1.isValid).toBe(false);
-    expect(Array.isArray(m.validation.f1.validation)).toBe(true);
+    expect(Array.isArray(m.validation.f1.errors)).toBe(true);
     expect(m.validation.f1.isValid).toBe(false);
 
     // Check aggregation (one invalid -> model invalid)
@@ -501,8 +501,8 @@ describe('Model Reset Functionality', () => {
     await m.validate();
 
     expect(m.isValid).toBe(false);
-    expect(Array.isArray(m.validation.f1.validation)).toBe(true);
-    expect(Array.isArray(m.validation.f2.validation)).toBe(true);
+    expect(Array.isArray(m.validation.f1.errors)).toBe(true);
+    expect(Array.isArray(m.validation.f2.errors)).toBe(true);
 
     m.reset();
 
@@ -554,12 +554,12 @@ describe('Model Validation Errors Synchronization', () => {
 
     // 检查 validation 结构：失败时为错误数组
     expect(m.validation.email).toBeDefined();
-    expect(Array.isArray(m.validation.email.validation)).toBe(true);
-    expect(m.validation.email.validation.length).toBeGreaterThan(0);
+    expect(Array.isArray(m.validation.email.errors)).toBe(true);
+    expect(m.validation.email.errors.length).toBeGreaterThan(0);
     expect(m.validation.email.isValid).toBe(false);
 
     expect(m.validation.age).toBeDefined();
-    expect(Array.isArray(m.validation.age.validation)).toBe(true);
+    expect(Array.isArray(m.validation.age.errors)).toBe(true);
   });
 
   it('should update model.validation when field validation changes', async () => {
@@ -572,8 +572,8 @@ describe('Model Validation Errors Synchronization', () => {
     m.value.name = 'a';
     await m.fields.name.validate();
 
-    expect(Array.isArray(m.validation.name.validation)).toBe(true);
-    expect(m.validation.name.validation.length).toBeGreaterThan(0);
+    expect(Array.isArray(m.validation.name.errors)).toBe(true);
+    expect(m.validation.name.errors.length).toBeGreaterThan(0);
     expect(m.validation.name.isValid).toBe(false);
 
     // 修正后验证通过
@@ -597,9 +597,9 @@ describe('Model Validation Errors Synchronization', () => {
     m.value.password = 'short';
     await m.validate();
 
-    expect(Array.isArray(m.validation.password.validation)).toBe(true);
+    expect(Array.isArray(m.validation.password.errors)).toBe(true);
     // Zod 只返回第一个失败的错误
-    expect(m.validation.password.validation[0].message).toBe('At least 8 characters');
+    expect(m.validation.password.errors[0].message).toBe('At least 8 characters');
     expect(m.fields.password.validation[0].message).toBe('At least 8 characters');
   });
 });

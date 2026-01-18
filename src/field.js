@@ -72,11 +72,11 @@ class Proto extends Base {
     if(opts.isValid !== undefined) {
       ths.isValid = opts.isValid;
     }
-    
+
     if(opts.validation){
-      ths.validation =pts.validation;
+      ths.validation = opts.validation;
     }
-    
+
     if (Array.isArray(value)) {
       // FIX: pass notifyChange as callback, bound to ths
       value = arrayProxy(value, notifyChange.bind(ths));
@@ -122,7 +122,7 @@ class Proto extends Base {
       })
       .catch(e=>{
         // FIX: Handle null/undefined throw
-        if (e === null) throw e; 
+        if (e === null) throw e;
         console.log('Validation Error:', this.name, e);
         isValid = false;
         // 兼容 Zod 错误 (e.issues) 和普通 Error (转为数组)
@@ -139,7 +139,7 @@ class Proto extends Base {
         }
       });
     }
-    
+
     if (isValid !== this.isValid || isErrorNotSame) {
       this.validation = _validation;
       this.isValid = isValid;
@@ -151,12 +151,17 @@ class Proto extends Base {
   format(value) {
     return value;
   }
-  reset() {
+  reset(opts={}) {
     this.validation = [];
     const state = instanceStateMap.get(this);
     state.value = this.isArray ? arrayProxy(clone(this.initVal), notifyChange.bind(this)) : this.initVal;
     state._value = this.isArray ? clone(this.initVal) : this.initVal;
     this.isValid = undefined;
+    this.isDirty = false;
+    return this;
+  }
+  commit(opts={}) {
+    this.initVal = this.isArray ? clone(this.value) : this.value;
     this.isDirty = false;
     return this;
   }
@@ -184,7 +189,7 @@ export default function defineField(name, clsOpt = {}) {
   class F extends Proto {
     name       = name;
     initValue  = value;
-    isValid    = isValid;
+    isValid    = isValid !== undefined ? isValid : this.isValid;
     __field__  = true;
   }
 
@@ -216,8 +221,23 @@ export default function defineField(name, clsOpt = {}) {
 export function defineFields(fieldsCfg = {}) {
   let fields = [];
   const _defineField = (name, opts) => {
+    if (typeof opts === 'string') {
+      opts = { name: opts };
+    }
     const realName = name !== undefined ? name : opts.name;
-    const f = (opts.__field__ || opts.__model__) ? opts : defineField(realName, opts);
+    let f;
+    if (opts.__field__ || opts.__model__) {
+      f = opts;
+      if (realName && f.name !== realName) {
+        class Wrapped extends f {}
+        Object.defineProperty(Wrapped, "name", {value: realName});
+        if(f.__model__) Wrapped.__model__ = true;
+        if(f.__field__) Wrapped.__field__ = true;
+        f = Wrapped;
+      }
+    } else {
+      f = defineField(realName, opts);
+    }
     fields.push(f);
   };
   if (Array.isArray(fieldsCfg)) {
